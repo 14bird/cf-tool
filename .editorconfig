@@ -9,3 +9,4 @@ insert_final_newline = true
 [*.scala]
 indent_style = space
 indent_size = 2
+max_line_lenght = 120
