@@ -5,7 +5,8 @@ import java.io.*;
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonDSL._
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Using}
+import scala.io.Source
 
 package space.bird14.cp_tool:
   val PROJECT_NAME = "cp_tool"
@@ -18,8 +19,27 @@ package space.bird14.cp_tool:
       memoryLimit: Int = 512):  Try[File]
 
     trait Contest:
-      def getContestInfo(): Option[String]
-      def setContestInfo(id: String): Option[String]
+      def getContestInfo(): Option[ContestInfo] = 
+        try
+          val f = File(s"${Config.dataPath}now_info")
+          var content: String = Source.fromFile(f).getLines().mkString("")
+          Some(ContestInfo.fromString(content).get.asInstanceOf[ContestInfo])
+        catch
+          case e: Exception => None
+      protected def beforeSetContest(id : String) : Try[Seq[String]]
+      def getCategory() : String
+      def setContestInfo(id: String): Try[ContestInfo] =
+        val info = beforeSetContest(id)
+        if info.isSuccess then 
+          val result = ContestInfo(info.get, id, getCategory())
+          try
+            val f = File(s"${Config.dataPath}now_info")
+            Using(FileWriter(f)){fw => fw.write(compact(render(result.toJson)))}
+          catch
+            case e: Exception => Failure(e)
+          Success(result)
+        else
+          Failure(info.failed.get)
       def downloadTestData(id: String): Try[File]
       def submit(id: String): Try[String]
 
@@ -43,7 +63,6 @@ package space.bird14.cp_tool:
         trayIcon.displayMessage(PROJECT_NAME, message, MessageType.INFO);
 
     trait Jsonable:
-      def toJson : JValue
       def _fromJValue(json: JValue) : Any
       def fromString(s : String) : Try[Any] = 
         try
@@ -51,10 +70,22 @@ package space.bird14.cp_tool:
         catch
           case e : Exception => Failure(e)
 
-    case class CompetionSatus(name: String, id: String) extends Jsonable:
-      override def toJson: JValue = ("name" -> name) ~ ("id" -> id)
-      override def _fromJValue(json: JValue): CompetionSatus = 
+    // case class CompetionSatus(name: String, id: String) extends Jsonable:
+    //   override def toJson: JValue = ("name" -> name) ~ ("id" -> id)
+    //   override def _fromJValue(json: JValue): CompetionSatus = 
+    //     implicit val formats = DefaultFormats
+    //     CompetionSatus((json \ "name").extract[String], (json \ "id").extract[String])
+
+    case class ContestInfo(problems: Seq[String], id : String, category: String) :
+      def toJson = ("problems" -> problems) ~~ ("id" -> id) ~~ ("category" -> category)
+    object ContestInfo extends Jsonable :
+      override def _fromJValue(json: JValue): ContestInfo = 
         implicit val formats = DefaultFormats
-        CompetionSatus((json \ "name").extract[String], (json \ "id").extract[String])
+        ContestInfo((json \ "problems").extract[Seq[String]], (json \ "id").extract[String], 
+        (json \ "category").extract[String])
+
+
+    object Config:
+      def dataPath = "data/"
     
 
