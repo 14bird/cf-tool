@@ -13,10 +13,11 @@ package space.bird14.cp_tool:
 
   package common:
     trait Language:
+      def support(srcFile: String): Boolean
       def beforeSumit(problem: String, answer: String): Try[File]
       def compile(srcFile: String, templatePath: String): Try[File]
       def run(runPath: String, inputFile: String, outputFile: String, timeLimit: Int = 1000, 
-      memoryLimit: Int = 512):  Try[File]
+        memoryLimit: Int = 512):  Try[File]
 
     trait Contest:
       def getContestInfo(): Option[ContestInfo] = 

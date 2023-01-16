@@ -15,9 +15,19 @@ package space.bird14.cp_tool:
         case "help" =>
           val info = f"""
           This program has several commands available.
-          help print the summary
+          help Print the summary
+          cf {id} Set information of CodeForces. 
           """
           println(info)
+        case "cf" =>
+          if (args.length > 0) then
+            val result = CodeForces.setContestInfo(args.head)
+            if result.isSuccess then
+              println(compact(render(result.get.toJson)))
+            else
+              println(result.failed)
+          else
+            println("please input the id of contest")
         case _: String => 
           println("command not found, you can refer to help")
       
