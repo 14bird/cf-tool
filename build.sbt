@@ -1,5 +1,5 @@
 ThisBuild / scalaVersion := "3.2.0"
-
+Compile / compileOrder := CompileOrder.JavaThenScala
 exportJars := true
 
 lazy val word = (project in file("."))
@@ -8,5 +8,4 @@ lazy val word = (project in file("."))
     "org.jsoup" % "jsoup" % "1.15.3",
    "org.json4s" %% "json4s-native" % "4.0.6",
     )
-
   )

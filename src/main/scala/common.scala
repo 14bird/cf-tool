@@ -88,5 +88,19 @@ package space.bird14.cp_tool:
 
     object Config:
       def dataPath = "data/"
+
+    object CommonUtil:
+      def relativePathToAbstractPathByRunPath(relativePath: String) : String =
+        if relativePath.startsWith("/") then return relativePath
+        val runtime = Runtime.getRuntime()
+        val process = runtime.exec("pwd")
+        var abstractPath = String(process.getInputStream().readAllBytes())
+        abstractPath = abstractPath.replaceAllLiterally(System.lineSeparator(), "")
+        for s <- relativePath.split(File.separator) if s != "." if s.length() > 0 do
+          if ".." == s then 
+            abstractPath = abstractPath.split(File.separator).dropRight(1).mkString(File.separator)
+          else
+            abstractPath += File.separator + s
+        abstractPath
     
 
