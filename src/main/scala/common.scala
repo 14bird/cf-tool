@@ -41,7 +41,7 @@ package space.bird14.cp_tool:
           Success(result)
         else
           Failure(info.failed.get)
-      def downloadTestData(id: String): Try[File]
+      def downloadTestData(id: String): Try[Int]
       def submit(id: String): Try[String]
 
     object Display:
@@ -103,4 +103,12 @@ package space.bird14.cp_tool:
             abstractPath += File.separator + s
         abstractPath
     
+    object ContestHelper extends Contest:
+      protected def beforeSetContest(id : String) : Try[Seq[String]] = ???
+      def downloadTestData(id: String): Try[Int] = ???
+      def submit(id: String): Try[String] = ???
+      def getCategory(): String = ???
 
+    enum ContestType(val name: String)  {
+      case CF extends ContestType("CodeForces")
+}
