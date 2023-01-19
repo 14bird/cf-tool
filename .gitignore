@@ -6,3 +6,5 @@ target
 project
 data
 test-data
+.idea
+*.iml

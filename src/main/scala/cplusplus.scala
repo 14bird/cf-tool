@@ -6,11 +6,33 @@ import java.lang.Runtime
 package space.bird14.cp_tool.lan:
   abstract class CPlusPlus extends Language:
     def beforeSumit(problem: String, answer: String): Try[File] = ???
-    def run(runPath: String, inputFile: String, outputFile: String, timeLimit: Int = 1000, 
-      memoryLimit: Int = 512):  Try[File] = ???
-    def support(srcFile: String): Boolean = 
-      srcFile.split(File.separator).tail.endsWith(List("c","cpp","cc"))
+    def run(runFile: File, inputFile: File, outputFile: File, timeLimit: Int = 1, 
+      memoryLimit: Int = 512):  Try[Tuple2[Boolean, String]] = 
+      val outId = java.util.UUID.randomUUID.toString() + System.currentTimeMillis()
+        //todo limit memory
+      val command: Array[String] = Array("/bin/sh", "-c", s"timeout $timeLimit ${runFile.getAbsolutePath()} < " +
+        s"${inputFile.getAbsolutePath()} > /tmp/${outId}")
+      println(s"/tmp/${outId}")
+      println(command.mkString(" "))
+      var process = Runtime.getRuntime().exec(command)
+      var stdout: String = ""
+      var errout: String = ""
+      Using(new BufferedInputStream(process.getErrorStream())){bis => errout = String(bis.readAllBytes())}
+      Using(new BufferedInputStream(process.getInputStream())){bis => stdout = String(bis.readAllBytes())}
+      if !errout.isEmpty() then return Failure(RuntimeException(errout))
+      process = Runtime.getRuntime().exec(s"diff ${outputFile.getAbsolutePath()} /tmp/${outId}")
+      Using(new BufferedInputStream(process.getInputStream())){bis => stdout = String(bis.readAllBytes())}
+      Using(new BufferedInputStream(process.getErrorStream())){bis => errout = String(bis.readAllBytes())}
+      if !errout.isEmpty() then return Failure(RuntimeException(errout))
+      if stdout.isEmpty then return Success(Tuple2(true, ""))
+      else return Success(Tuple2(false, stdout))
 
+    def support(srcFile: String): Boolean = 
+      val fileName = srcFile.split(File.separator).last
+      var result = false
+      for s <- List("c", "cpp", "cc") do
+        result |= fileName.endsWith(s)
+      return result
   object Clang extends CPlusPlus :
     def compile(srcFile: String, templatePath: String): Try[File] = 
       val run = Runtime.getRuntime()

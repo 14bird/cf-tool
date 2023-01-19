@@ -11,12 +11,15 @@ import scala.util.Failure
 
 package space.bird14.cp_tool.contest:
   object CodeForces extends Contest:
-    override def downloadTestData(id: String): Try[Int] = 
-      val info = getContestInfo()
-      if info.isEmpty then return Failure(RuntimeException("can't get contextInfo"))
+    def checkInfo(): Option[ContestInfo] =
+      val info = ContestInfo.getContestInfo()
+      if info.isEmpty then throw RuntimeException("can't get contextInfo")
       if info.get.category != getCategory() then 
-        return Failure(RuntimeException("Now isn't codeforces, please reset conset info"))
+        throw RuntimeException("Now isn't codeforces, please reset conset info")
+      return info
+    override def downloadTestData(id: String): Try[Int] = 
       try
+        val info = checkInfo()
         val doc = Jsoup.connect(s"https://codeforces.com/contest/${info.get.id}/problem/${id}").get()
         // val doc = Jsoup.parse(File("test-data/B.html"))
         val sample = doc.getElementsByClass("sample-tests").get(0)
@@ -61,4 +64,13 @@ package space.bird14.cp_tool.contest:
 
     override def submit(id: String): Try[String] = ???
     def getCategory() : String = ContestType.CF.name
-      
+    override def getInputFiles(id: String): Seq[File] = 
+      try
+        val info = checkInfo()
+        val dir = File(s"${Config.dataPath}/cf/problem/${info.get.id}_${id}")
+        if !dir.exists || dir.isFile  then
+          return Seq()
+        for f <- dir.listFiles if f.getName().startsWith("input") yield f
+      catch
+        case e: Exception => Seq()
+  
