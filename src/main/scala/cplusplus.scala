@@ -28,11 +28,7 @@ package space.bird14.cp_tool.lan:
       else return Success(Tuple2(false, stdout))
 
     def support(srcFile: String): Boolean = 
-      val fileName = srcFile.split(File.separator).last
-      var result = false
-      for s <- List("c", "cpp", "cc") do
-        result |= fileName.endsWith(s)
-      return result
+      List("c", "cpp", "cc").exists(srcFile.split(File.separator).last.endsWith(_))
   object Clang extends CPlusPlus :
     def compile(srcFile: String, templatePath: String): Try[File] = 
       val run = Runtime.getRuntime()
